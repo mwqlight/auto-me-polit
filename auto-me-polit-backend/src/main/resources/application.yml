@@ -1,0 +1,214 @@
+server:
+  port: 8080
+  servlet:
+    context-path: /api/v1
+
+spring:
+  application:
+    name: auto-me-polit-backend
+  
+  # 数据库配置
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/auto_me_polit?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+    username: root
+    password: root
+    hikari:
+      minimum-idle: 5
+      maximum-pool-size: 20
+      auto-commit: true
+      idle-timeout: 30000
+      pool-name: AutoMePolitHikariCP
+      max-lifetime: 1800000
+      connection-timeout: 30000
+
+  # Redis配置
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      password: 
+      database: 0
+      timeout: 60000
+      lettuce:
+        pool:
+          max-active: 8
+          max-wait: -1
+          max-idle: 8
+          min-idle: 0
+
+  # JPA配置
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect
+        format_sql: true
+    defer-datasource-initialization: false
+
+  # 线程池配置
+  task:
+    execution:
+      pool:
+        core-size: 5
+        max-size: 20
+        queue-capacity: 100
+        keep-alive: 60s
+    scheduling:
+      pool:
+        size: 5
+
+# Swagger配置
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: method
+    tags-sorter: alpha
+  packages-to-scan: com.company.controller
+  show-actuator: true
+
+# 日志配置
+logging:
+  level:
+    com.company: DEBUG
+    org.springframework.security: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: logs/auto-me-polit.log
+    max-size: 100MB
+    max-history: 30
+
+# 统一身份认证平台配置
+auto-me-polit:
+  security:
+    # JWT配置
+    jwt:
+      secret: MySecretKeyForAutoMePolitPlatform123456789
+      expiration: 86400 # 24小时（秒）
+      refresh-expiration: 604800 # 7天（秒）
+    # 加密配置
+    crypto:
+      # 国密SM2算法配置
+      sm2:
+        enabled: true
+        public-key-path: config/sm2/public.key
+        private-key-path: config/sm2/private.key
+      # AES加密配置
+      aes:
+        key-size: 256
+        iv-size: 16
+    # 安全级别配置
+    security-levels:
+      basic: 1
+      standard: 2
+      high: 3
+      critical: 4
+
+  # 密钥管理配置
+  key-management:
+    # Shamir's Secret Sharing配置
+    shamir:
+      min-shares: 3
+      total-shares: 5
+    # 恢复联系人配置
+    recovery:
+      max-contacts: 5
+      contact-validation-required: true
+
+  # 生物特征配置
+  biometric:
+    # 支持的生物特征类型
+    supported-types: FINGERPRINT,FACE,VOICE
+    # 生物特征模板加密
+    template-encryption: true
+    # 生物特征哈希算法
+    hash-algorithm: SHA-256
+
+  # 账户关联配置
+  account-linking:
+    # 支持的第三方平台
+    supported-platforms: GOOGLE,FACEBOOK,TWITTER,WECHAT,ALIPAY
+    # 关联验证配置
+    verification:
+      enabled: true
+      timeout: 300 # 5分钟
+
+  # 共享策略配置
+  sharing:
+    # 默认共享期限（小时）
+    default-duration: 24
+    # 最大共享期限（小时）
+    max-duration: 168 # 7天
+    # 共享属性白名单
+    allowed-attributes: IDENTITY_ID,NAME,EMAIL,PHONE,PROFILE_IMAGE,STATUS
+
+  # 系统配置
+  system:
+    # 系统名称
+    name: 统一身份认证驾驶舱平台
+    # 系统版本
+    version: 1.0.0
+    # 开发者信息
+    developer: AutoMe Polit Team
+    # 支持邮箱
+    support-email: support@automepolit.com
+
+  # 监控配置
+  monitoring:
+    # 健康检查端点
+    health-check:
+      enabled: true
+      interval: 60 # 秒
+    # 性能监控
+    metrics:
+      enabled: true
+      export-interval: 60 # 秒
+
+---
+# 开发环境配置
+spring:
+  config:
+    activate:
+      on-profile: dev
+  
+  # 开发环境数据库配置（使用SQLite方便开发）
+  datasource:
+    driver-class-name: org.sqlite.JDBC
+    url: jdbc:sqlite:dev_auto_me_polit.db
+    username: 
+    password: 
+
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: create-drop
+
+  # 开发环境Redis配置（使用嵌入式Redis或跳过Redis依赖）
+  data:
+    redis:
+      port: 0 # 禁用Redis连接
+
+---
+# 生产环境配置
+spring:
+  config:
+    activate:
+      on-profile: prod
+  
+  jpa:
+    show-sql: false
+    hibernate:
+      ddl-auto: validate
+
+  logging:
+    level:
+      com.company: INFO
+      root: WARN
